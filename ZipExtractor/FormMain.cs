@@ -171,7 +171,6 @@ namespace ZipExtractor
                                     {
                                         using Stream stream = entry.Open();
                                         stream.CopyTo(destination);
-                                        stream.Flush();
                                         destination.SetLength(destination.Position);
                                     }
 
