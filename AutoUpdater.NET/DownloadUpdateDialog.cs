@@ -161,16 +161,10 @@ namespace AutoUpdaterDotNET
                         arguments.Append(" --clear");
                     }
                     
-                    string[] args = Environment.GetCommandLineArgs();
-                    for (int i = 1; i < args.Length; i++)
+                    if (!string.IsNullOrEmpty(installerArgs))
                     {
-                        if (i.Equals(1))
-                        {
-                            arguments.Append(" --args \"");
-                        }
-
-                        arguments.Append($"\"{args[i]}\"");
-                        arguments.Append(i.Equals(args.Length - 1) ? "\"" : " ");
+                        arguments.Append(" --args \"");
+                        arguments.Append($"\"{installerArgs}\"\"");
                     }
 
                     processStartInfo = new ProcessStartInfo

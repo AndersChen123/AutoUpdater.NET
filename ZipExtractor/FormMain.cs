@@ -54,7 +54,14 @@ namespace ZipExtractor
                         clearAppDirectory = true;
                         break;
                     case "--args":
-                        commandLineArgs = args[index + 1];
+                        var cla = args[index + 1];
+                        for (var j = index + 2; j < args.Length; j++)
+                        {
+                            if (args[j].StartsWith("--")) break;
+
+                            cla += " " + args[j];
+                        }
+                        commandLineArgs = cla;
                         break;
                 }
                 _logBuilder.AppendLine($"[{index}] {arg}");
