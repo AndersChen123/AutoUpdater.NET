@@ -392,8 +392,8 @@ namespace AutoUpdaterDotNET
 
             if (!Mandatory)
             {
-                if (string.IsNullOrEmpty(args.Mandatory.MinimumVersion) ||
-                    args.InstalledVersion < new Version(args.Mandatory.MinimumVersion))
+                if (string.IsNullOrWhiteSpace(args.Mandatory.MaximumVersion) ||
+                         args.InstalledVersion > new Version(args.Mandatory.MaximumVersion))
                 {
                     Mandatory = args.Mandatory.Value;
                     UpdateMode = args.Mandatory.UpdateMode;

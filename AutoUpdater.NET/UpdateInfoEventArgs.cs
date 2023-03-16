@@ -106,10 +106,10 @@ namespace AutoUpdaterDotNET
         public bool Value { get; set; }
 
         /// <summary>
-        ///     If this is set and 'Value' property is set to true then it will trigger the mandatory update only when current installed version is less than value of this property.
+        ///     If this is set and 'Value' property is set to true then it will trigger the mandatory update only when current installed version is greater than value of this property.
         /// </summary>
-        [XmlAttribute("minVersion")]
-        public string MinimumVersion { get; set; }
+        [XmlAttribute("maxVersion")]
+        public string MaximumVersion { get; set; }
 
         /// <summary>
         ///     Mode that should be used for this update.

@@ -152,7 +152,7 @@ namespace AutoUpdaterTest
                 {
                     Value = json.mandatory.value,
                     UpdateMode = json.mandatory.mode,
-                    MinimumVersion = json.mandatory.minVersion
+                    MaximumVersion = json.mandatory.maxVersion
                 },
                 CheckSum = new CheckSum
                 {
