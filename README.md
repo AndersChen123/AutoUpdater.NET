@@ -4,9 +4,11 @@
 
 AutoUpdater.NET is a class library that allows .NET developers to easily add auto update functionality to their classic desktop application projects.
 
-**Differences with the official version: 
-1. args will be passed to exe when restarting the application after the update is completed.
-2. minVersion is changed to maxVersion, only applications larger than this version can be updated.**
+__Differences with the official version:__
+
+**1. args will be passed to exe when restarting the application after the update is completed.**
+
+**2. minVersion is changed to maxVersion, only applications larger than this version can be updated.**
 
 ## The NuGet Package  [![NuGet](https://img.shields.io/nuget/v/Autoupdater.NET.Official.svg)](https://www.nuget.org/packages/Autoupdater.NET.Inofficial/)
 
