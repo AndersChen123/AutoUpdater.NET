@@ -4,17 +4,23 @@
 
 AutoUpdater.NET is a class library that allows .NET developers to easily add auto update functionality to their classic desktop application projects.
 
-## The NuGet Package  [![NuGet](https://img.shields.io/nuget/v/Autoupdater.NET.Official.svg)](https://www.nuget.org/packages/Autoupdater.NET.Official/) [![NuGet](https://img.shields.io/nuget/dt/Autoupdater.NET.Official.svg)](https://www.nuget.org/packages/Autoupdater.NET.Official/)
+__Differences with the official version:__
+
+**1. args will be passed to exe when restarting the application after the update is completed.**
+
+**2. minVersion is changed to maxVersion, only applications larger than this version can be updated.**
+
+## The NuGet Package  [![NuGet](https://img.shields.io/nuget/v/Autoupdater.NET.Official.svg)](https://www.nuget.org/packages/Autoupdater.NET.Inofficial/)
+
 
 ````powershell
-PM> Install-Package Autoupdater.NET.Official
+PM> Install-Package Autoupdater.NET.Inofficial
 ````
 
 ## Supported .NET versions
 
-* .NET Framework 4.5 or above
-* .NET Core 3.1
-* .NET 5.0 or above
+* .NET Framework 4.7.2 or above
+* .NET 6.0 or above
 
 This library only works for WinForms or WPF application projects.
 
