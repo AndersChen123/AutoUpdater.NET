@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Mime;
 using System.Security.Cryptography;
@@ -62,7 +64,7 @@ namespace AutoUpdaterDotNET
 
         private void OnDownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
         {
-            if (_startedAt == default(DateTime))
+            if (_startedAt == default)
             {
                 _startedAt = DateTime.Now;
             }
@@ -84,10 +86,7 @@ namespace AutoUpdaterDotNET
 
         private void WebClientOnDownloadFileCompleted(object sender, AsyncCompletedEventArgs asyncCompletedEventArgs)
         {
-            if (asyncCompletedEventArgs.Cancelled)
-            {
-                return;
-            }
+            if (asyncCompletedEventArgs.Cancelled) return;
 
             try
             {
@@ -101,19 +100,39 @@ namespace AutoUpdaterDotNET
                     CompareChecksum(_tempFile, _args.CheckSum);
                 }
 
+                // try to parse the content disposition header if it exists
                 ContentDisposition contentDisposition = null;
                 if (!string.IsNullOrWhiteSpace(_webClient.ResponseHeaders?["Content-Disposition"]))
                 {
-                    contentDisposition = new ContentDisposition(_webClient.ResponseHeaders["Content-Disposition"]);
+                    try
+                    {
+                        if (!string.IsNullOrWhiteSpace(_webClient.ResponseHeaders?["Content-Disposition"]))
+                        {
+                            contentDisposition =
+                                new ContentDisposition(_webClient.ResponseHeaders["Content-Disposition"]);
+                        }
+                    }
+                    catch (FormatException)
+                    {
+                        // ignore content disposition header if it is wrongly formated
+                        contentDisposition = null;
+                    }
                 }
 
                 var fileName = string.IsNullOrEmpty(contentDisposition?.FileName)
                     ? Path.GetFileName(_webClient.ResponseUri.LocalPath)
                     : contentDisposition.FileName;
 
+                if (string.IsNullOrWhiteSpace(fileName))
+                {
+                    throw new WebException(Resources.UnableToDetermineFilenameMessage);
+                }
+
                 var tempPath =
                     Path.Combine(
-                        string.IsNullOrEmpty(AutoUpdater.DownloadPath) ? Path.GetTempPath() : AutoUpdater.DownloadPath,
+                        string.IsNullOrEmpty(AutoUpdater.DownloadPath) 
+                            ? Path.GetTempPath() 
+                            : AutoUpdater.DownloadPath,
                         fileName);
 
                 if (File.Exists(tempPath))
@@ -144,8 +163,15 @@ namespace AutoUpdaterDotNET
 
                     File.WriteAllBytes(installerPath, Resources.ZipExtractor);
 
-                    string executablePath = Process.GetCurrentProcess().MainModule?.FileName;
-                    string extractionPath = Path.GetDirectoryName(executablePath);
+                    string currentExe = Process.GetCurrentProcess().MainModule?.FileName;
+                    string updatedExe = _args.ExecutablePath;
+                    string extractionPath = Path.GetDirectoryName(currentExe);
+
+                    if (string.IsNullOrWhiteSpace(updatedExe) &&
+                        !string.IsNullOrWhiteSpace(AutoUpdater.ExecutablePath))
+                    {
+                        updatedExe = AutoUpdater.ExecutablePath;
+                    }
 
                     if (!string.IsNullOrEmpty(AutoUpdater.InstallationPath) &&
                         Directory.Exists(AutoUpdater.InstallationPath))
@@ -153,25 +179,43 @@ namespace AutoUpdaterDotNET
                         extractionPath = AutoUpdater.InstallationPath;
                     }
 
-                    StringBuilder arguments =
-                        new StringBuilder($"--input \"{tempPath}\" --output \"{extractionPath}\" --executable \"{executablePath}\"");
+                    var arguments = new Collection<string>
+                    {
+                        "--input",
+                        tempPath,
+                        "--output",
+                        extractionPath,
+                        "--current-exe",
+                        currentExe
+                    };
+
+                    if (!string.IsNullOrWhiteSpace(updatedExe))
+                    {
+                        arguments.Add("--updated-exe");
+                        arguments.Add(updatedExe);
+                    }
 
                     if (AutoUpdater.ClearAppDirectory)
                     {
-                        arguments.Append(" --clear");
+                        arguments.Add(" --clear");
                     }
-                    
+
+                    //string[] args = Environment.GetCommandLineArgs();
+                    //if (args.Length > 1)
+                    //{
+                    //    arguments.Add("--args");
+                    //    arguments.Add(string.Join(" ", args.Skip(1).Select(arg => $"\"{arg}\"")));
+                    //}
                     if (!string.IsNullOrEmpty(installerArgs))
                     {
-                        arguments.Append(" --args \"");
-                        arguments.Append($"\"{installerArgs}\"\"");
+                        arguments.Add($" --args \"\"{installerArgs}\"\"");
                     }
 
                     processStartInfo = new ProcessStartInfo
                     {
                         FileName = installerPath,
                         UseShellExecute = true,
-                        Arguments = arguments.ToString()
+                        Arguments = Utils.BuildArguments(arguments)
                     };
                 }
                 else if (extension.Equals(".msi", StringComparison.OrdinalIgnoreCase))
@@ -210,7 +254,7 @@ namespace AutoUpdaterDotNET
             }
             catch (Exception e)
             {
-                MessageBox.Show(e.Message, e.GetType().ToString(), MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(this, e.Message, e.GetType().ToString(), MessageBoxButtons.OK, MessageBoxIcon.Error);
                 _webClient = null;
             }
             finally
@@ -234,25 +278,21 @@ namespace AutoUpdaterDotNET
 
         private static void CompareChecksum(string fileName, CheckSum checksum)
         {
-            using (var hashAlgorithm =
+            using var hashAlgorithm =
                 HashAlgorithm.Create(
-                    string.IsNullOrEmpty(checksum.HashingAlgorithm) ? "MD5" : checksum.HashingAlgorithm))
+                    string.IsNullOrEmpty(checksum.HashingAlgorithm) ? "MD5" : checksum.HashingAlgorithm);
+            using var stream = File.OpenRead(fileName);
+            if (hashAlgorithm != null)
             {
-                using (var stream = File.OpenRead(fileName))
-                {
-                    if (hashAlgorithm != null)
-                    {
-                        var hash = hashAlgorithm.ComputeHash(stream);
-                        var fileChecksum = BitConverter.ToString(hash).Replace("-", string.Empty).ToLowerInvariant();
+                var hash = hashAlgorithm.ComputeHash(stream);
+                var fileChecksum = BitConverter.ToString(hash).Replace("-", string.Empty).ToLowerInvariant();
 
-                        if (fileChecksum == checksum.Value.ToLower()) return;
+                if (fileChecksum == checksum.Value.ToLower()) return;
 
-                        throw new Exception(Resources.FileIntegrityCheckFailedMessage);
-                    }
-
-                    throw new Exception(Resources.HashAlgorithmNotSupportedMessage);
-                }
+                throw new Exception(Resources.FileIntegrityCheckFailedMessage);
             }
+
+            throw new Exception(Resources.HashAlgorithmNotSupportedMessage);
         }
 
         private void DownloadUpdateDialog_FormClosing(object sender, FormClosingEventArgs e)
@@ -262,7 +302,7 @@ namespace AutoUpdaterDotNET
                 AutoUpdater.Exit();
                 return;
             }
-            if (_webClient is {IsBusy: true})
+            if (_webClient is { IsBusy: true })
             {
                 _webClient.CancelAsync();
                 DialogResult = DialogResult.Cancel;

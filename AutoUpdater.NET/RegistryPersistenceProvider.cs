@@ -2,98 +2,97 @@
 using System.Globalization;
 using Microsoft.Win32;
 
-namespace AutoUpdaterDotNET
+namespace AutoUpdaterDotNET;
+
+/// <summary>
+/// Provides a mechanism for storing AutoUpdater state between sessions based on storing data on the Windows Registry.
+/// </summary>
+public class RegistryPersistenceProvider : IPersistenceProvider
 {
     /// <summary>
-    /// Provides a mechanism for storing AutoUpdater state between sessions based on storing data on the Windows Registry.
+    /// Gets/sets the path for the Windows Registry key that will contain the data.
     /// </summary>
-    public class RegistryPersistenceProvider : IPersistenceProvider
+    private string RegistryLocation { get; }
+
+    private const string RemindLaterValueName = "RemindLaterAt";
+
+    private const string SkippedVersionValueName = "SkippedVersion";
+
+    /// <summary>
+    /// Initializes a new instance of the RegistryPersistenceProvider class indicating the path for the Windows registry key to use for storing the data.
+    /// </summary>
+    /// <param name="registryLocation"></param>
+    public RegistryPersistenceProvider(string registryLocation)
     {
-        /// <summary>
-        /// Gets/sets the path for the Windows Registry key that will contain the data.
-        /// </summary>
-        private string RegistryLocation { get; }
+        RegistryLocation = registryLocation;
+    }
 
-        private const string RemindLaterValueName = "RemindLaterAt";
-
-        private const string SkippedVersionValueName = "SkippedVersion";
-
-        /// <summary>
-        /// Initializes a new instance of the RegistryPersistenceProvider class indicating the path for the Windows registry key to use for storing the data.
-        /// </summary>
-        /// <param name="registryLocation"></param>
-        public RegistryPersistenceProvider(string registryLocation)
+    /// <inheritdoc />
+    public Version GetSkippedVersion()
+    {
+        try
         {
-            RegistryLocation = registryLocation;
-        }
-
-        /// <inheritdoc />
-        public Version GetSkippedVersion()
-        {
-            try
+            using (RegistryKey updateKey = Registry.CurrentUser.OpenSubKey(RegistryLocation))
             {
-                using (RegistryKey updateKey = Registry.CurrentUser.OpenSubKey(RegistryLocation))
-                {
-                    object skippedVersionValue = updateKey?.GetValue(SkippedVersionValueName);
+                object skippedVersionValue = updateKey?.GetValue(SkippedVersionValueName);
 
-                    if (skippedVersionValue != null)
-                    {
-                        return new Version(skippedVersionValue.ToString());
-                    }
+                if (skippedVersionValue != null)
+                {
+                    return new Version(skippedVersionValue.ToString());
                 }
             }
-            catch (Exception)
+        }
+        catch (Exception)
+        {
+            // ignored
+        }
+
+        return null;
+    }
+
+
+    /// <inheritdoc />
+    public DateTime? GetRemindLater()
+    {
+        using (RegistryKey updateKey = Registry.CurrentUser.OpenSubKey(RegistryLocation))
+        {
+            object remindLaterValue = updateKey?.GetValue(RemindLaterValueName);
+
+            if (remindLaterValue != null)
             {
-                // ignored
+                try
+                {
+                    return Convert.ToDateTime(remindLaterValue.ToString(),
+                        CultureInfo.CreateSpecificCulture("en-US").DateTimeFormat);
+                }
+                catch (FormatException)
+                {
+                    // ignored
+                }
             }
 
             return null;
         }
+    }
 
-
-        /// <inheritdoc />
-        public DateTime? GetRemindLater()
+    /// <inheritdoc />
+    public void SetSkippedVersion(Version version)
+    {
+        using (RegistryKey autoUpdaterKey = Registry.CurrentUser.CreateSubKey(RegistryLocation))
         {
-            using (RegistryKey updateKey = Registry.CurrentUser.OpenSubKey(RegistryLocation))
-            {
-                object remindLaterValue = updateKey?.GetValue(RemindLaterValueName);
-
-                if (remindLaterValue != null)
-                {
-                    try
-                    {
-                        return Convert.ToDateTime(remindLaterValue.ToString(),
-                            CultureInfo.CreateSpecificCulture("en-US").DateTimeFormat);
-                    }
-                    catch (FormatException)
-                    {
-                        // ignored
-                    }
-                }
-
-                return null;
-            }
+            autoUpdaterKey?.SetValue(SkippedVersionValueName, version != null ? version.ToString() : string.Empty);
         }
+    }
 
-        /// <inheritdoc />
-        public void SetSkippedVersion(Version version)
+    /// <inheritdoc />
+    public void SetRemindLater(DateTime? remindLaterAt)
+    {
+        using (RegistryKey autoUpdaterKey = Registry.CurrentUser.CreateSubKey(RegistryLocation))
         {
-            using (RegistryKey autoUpdaterKey = Registry.CurrentUser.CreateSubKey(RegistryLocation))
-            {
-                autoUpdaterKey?.SetValue(SkippedVersionValueName, version != null ? version.ToString() : string.Empty);
-            }
-        }
-
-        /// <inheritdoc />
-        public void SetRemindLater(DateTime? remindLaterAt)
-        {
-            using (RegistryKey autoUpdaterKey = Registry.CurrentUser.CreateSubKey(RegistryLocation))
-            {
-                autoUpdaterKey?.SetValue(RemindLaterValueName,
-                    remindLaterAt != null
-                        ? remindLaterAt.Value.ToString(CultureInfo.CreateSpecificCulture("en-US").DateTimeFormat)
-                        : string.Empty);
-            }
+            autoUpdaterKey?.SetValue(RemindLaterValueName,
+                remindLaterAt != null
+                    ? remindLaterAt.Value.ToString(CultureInfo.CreateSpecificCulture("en-US").DateTimeFormat)
+                    : string.Empty);
         }
     }
 }

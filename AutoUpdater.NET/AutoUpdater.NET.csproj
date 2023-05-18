@@ -3,33 +3,34 @@
     <PropertyGroup>
         <ProjectGuid>{FB9E7E6B-B19F-4F37-A708-2996190CEF13}</ProjectGuid>
         <OutputType>library</OutputType>
-        <TargetFrameworks>net472;netcoreapp3.1;net5.0-windows;net6.0-windows</TargetFrameworks>
+        <TargetFrameworks>net472;net6.0-windows</TargetFrameworks>
         <UseWindowsForms>true</UseWindowsForms>
         <UseWpf>true</UseWpf>
         <RootNamespace>AutoUpdaterDotNET</RootNamespace>
         <AssemblyTitle>AutoUpdater.NET</AssemblyTitle>
-        <Company>RBSoft</Company>
+        <Company></Company>
         <Product>AutoUpdater.NET</Product>
-        <Copyright>Copyright © 2012-2023 RBSoft</Copyright>
+        <Copyright>Copyright © 2023 Anders Chen</Copyright>
         <Version>1.7.7.0</Version>
         <AssemblyVersion>1.7.7.0</AssemblyVersion>
         <FileVersion>1.7.7.0</FileVersion>
-        <SignAssembly>False</SignAssembly>
-        <AssemblyOriginatorKeyFile>AutoUpdater.NET.snk</AssemblyOriginatorKeyFile>
+        <SignAssembly>True</SignAssembly>
+        <AssemblyOriginatorKeyFile>D:\Sources\AutoUpdater.NET\AutoUpdater.snk</AssemblyOriginatorKeyFile>
         <NeutralLanguage>en</NeutralLanguage>
-        <PackageId>Autoupdater.NET.Official</PackageId>
+        <PackageId>Autoupdater.NET.Inofficial</PackageId>
         <IncludeSymbols>true</IncludeSymbols>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
-        <PackageVersion>1.7.7.0</PackageVersion>
+        <PackageVersion>1.7.7.2</PackageVersion>
         <Title>AutoUpdater.NET</Title>
-        <Authors>rbsoft</Authors>
+        <Authors>Anders Chen</Authors>
         <Description>AutoUpdater.NET is a class library that allows .NET developers to easily add auto update functionality to their WinForms or WPF application projects.</Description>
-        <PackageProjectUrl>https://github.com/ravibpatel/AutoUpdater.NET</PackageProjectUrl>
+        <PackageProjectUrl>https://github.com/AndersChen123/AutoUpdater.NET</PackageProjectUrl>
         <PackageTags>autoupdate updater c# vb wpf winforms</PackageTags>
-        <PackageReleaseNotes>https://github.com/ravibpatel/AutoUpdater.NET/releases</PackageReleaseNotes>
+        <PackageReleaseNotes></PackageReleaseNotes>
         <PackageOutputPath>build</PackageOutputPath>
         <DocumentationFile>$(OutputPath)\$(Configuration)\AutoUpdater.NET.xml</DocumentationFile>
-        <LangVersion>default</LangVersion>
+        <LangVersion>latest</LangVersion>
+        <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
         <OutputPath>build\lib</OutputPath>
@@ -51,6 +52,6 @@
         <PackageReference Include="Resource.Embedder" Version="1.2.8" PrivateAssets="All" />
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.1587.40" />
+        <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.1774.30" />
     </ItemGroup>
 </Project>
